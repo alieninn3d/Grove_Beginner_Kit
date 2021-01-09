@@ -1,412 +1,137 @@
 //////////////////////////////////////////////////////////////////////////////////
-// all of the code from the examples, in one spot - manipulate into one process //
-//                          hack the planet, again                              //
+//                              Alien Inn Pty Ltd                               //
+//                   War Drive Area 51 Moon Bounce Project                      //
+//         Deep Space Sensor and Asset Control Concept Demonstrator             //
+//                         !!! Hack the Planet, Again  !!!                      //  
+//         (based on the code supplied with the Grove Beginners Kit             //
 //////////////////////////////////////////////////////////////////////////////////
 
+// INCLUDE SOME MODULES // // what is this who owns it where do i find it //
 
-// Hello.ino
-//  void setup() {
-//  Serial.begin(9600); // initializes the serial port with a baud rate of 9600
-//  }
-//  void loop() {
-//    Serial.println("hello, world"); // prints a string to a serial port
-//    delay(1000); //delay of 1 second
-//  }
+#include "Arduino.h" // what is this who owns it where do i find it
+#include "LIS3DHTR.h" // Gravity Accellerator Sensor //
+          #ifdef SOFTWAREWIRE
+            #include <SoftwareWire.h>
+              SoftwareWire myWire(3, 2);
+              LIS3DHTR<SoftwareWire> LIS;       //Software I2C
+              #define WIRE myWire
+              #else
+            #include <Wire.h>
+              LIS3DHTR<TwoWire> LIS;           //Hardware I2C
+              #define WIRE Wire
+          #endif
+#include "Seeed_BMP280.h" // what is this who owns it where do i find it
+#include "Wire.h" // what is this who owns it where do i find it
+#include "U8x8lib.h" // what is this who owns it where do i find it
+#include "DHT.h" // what is this who owns it where do i find it
+// #include "next module"
 
-//LED Blink
-//The LED will turn on for one second and then turn off for one second
-//  int ledPin = 4;
-//  void setup() {
-//      pinMode(ledPin, OUTPUT);
-//  }
-//  void loop() {
-//      digitalWrite(ledPin, HIGH);
-//      delay(1000);
-//      digitalWrite(ledPin, LOW);
-//      delay(1000);
-//  }
+// DEFINITIONS //
 
-//Button to turn ON/OFF LED
-//Constants won't change. They're used here to set pin numbers:
-//  const int buttonPin = 6;     // the number of the pushbutton pin
-//  const int ledPin =  4;      // the number of the LED pin
- 
-// variables will change:
-//  int buttonState = 0;         // variable for reading the pushbutton status
- 
-//  void setup() {
-  // initialize the LED pin as an output:
-//    pinMode(ledPin, OUTPUT);
-  // initialize the pushbutton pin as an input:
-//    pinMode(buttonPin, INPUT);
-//  }
- 
-//  void loop() {
-  // read the state of the pushbutton value:
-//    buttonState = digitalRead(buttonPin);
- 
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-//    if (buttonState == HIGH) {
-    // turn LED on:
- //     digitalWrite(ledPin, HIGH);
- //   } else {
-    // turn LED off:
- //     digitalWrite(ledPin, LOW);
- //   }
-//  }
+int soundPin = A2; // Analog sound sensor is to be attached to analog
+int ledPin = 4; // Digital LED is to be attached to digital
+BMP280 bmp280;
+#define DHTPIN 3     // what pin we're connected to
+#define DHTTYPE DHT11   // DHT 11 
+DHT dht(DHTPIN, DHTTYPE);
 
-//Rotary controls LED
-//  int rotaryPin = A0;    // select the input pin for the rotary
-//  int ledPin = 4;      // select the pin for the LED
-//  int rotaryValue = 0;  // variable to store the value coming from the rotary
- 
-//  void setup() {
-  // declare the ledPin as an OUTPUT:
-//    pinMode(ledPin, OUTPUT);
-//    pinMode(rotaryPin, INPUT);
-//  }
- 
-//  void loop() {
-  // read the value from the sensor:
- //   rotaryValue = analogRead(rotaryPin);
-  // turn the ledPin on
- //   digitalWrite(ledPin, HIGH);
-  // stop the program for <sensorValue> milliseconds:
- //   delay(rotaryValue);
-  // turn the ledPin off:
-//    digitalWrite(ledPin, LOW);
-  // stop the program for for <sensorValue> milliseconds:
-//   delay(rotaryValue);
-//  }
+void setup() {
+    // SET BAUD RATE //
+      Serial.begin(9600); // initializes the serial port with a baud rate of 9600
+    
+    // SET LED //
+      pinMode(ledPin, OUTPUT); // set the led up
+      pinMode(soundPin, INPUT);
+    
+    // Gravity Accellerator
+      while (!Serial) {};
+      LIS.begin(WIRE, 0x19); //IIC init
+      delay(100);
+      LIS.setOutputDataRate(LIS3DHTR_DATARATE_50HZ);
+    
+    // Air pressure detection
+      if (!bmp280.init()) {
+       Serial.println("Device not connected or broken!");
+      }
 
-//  int BuzzerPin = 5;
- 
-//  void setup() {
-//    pinMode(BuzzerPin, OUTPUT);
-//  }
- 
-//  void loop() {
-//    analogWrite(BuzzerPin, 128);
-//    delay(1000);
-//    analogWrite(BuzzerPin, 0);
-//    delay(0);
-//  }
-
-//  int LED = 3; // Cable connection from LED to D3
-//  int Potentiometer = A0;
- 
-//  void setup() {
- //   pinMode(LED, OUTPUT);
- //   pinMode(Potentiometer, INPUT);
-//  }
- 
-//  void loop() {
- //   int potentioValue, Value;
- //   potentioValue = analogRead(Potentiometer);
-//    Value = map(potentioValue, 0, 1023, 0, 255); //Mapping potentiometer value to PWM signal value
- //   analogWrite(LED, Value);
-//  }
-
-// Light Switch
-//  int sensorpin = A6; // Analog input pin that the sensor is attached to
-//  int ledPin = 4;    // LED port
-//  int sensorValue = 0;        // value read from the port
-//  int outputValue = 0;        // value output to the PWM (analog out)
- 
-//  void setup() {
-//    pinMode(ledPin,OUTPUT);
-//    pinMode(sensorpin, INPUT);
- //   Serial.begin(9600);
-//  }
- 
-//  void loop() {
-  // read the analog in value:
- //   sensorValue = analogRead(sensorpin);
- 
- //   Serial.println(sensorValue);
- 
- //   if (sensorValue < 200) {
-  //    digitalWrite(ledPin, HIGH);
- //   }
- //   else {
- //     digitalWrite(ledPin, LOW);
-//    }
- 
- //   delay(200);
-//  }
-
-//Sound Control Light
-//  int soundPin = A2; // Analog sound sensor is to be attached to analog
-//  int ledPin = 4; // Digital LED is to be attached to digital
-//  void setup() {
- //   pinMode(ledPin, OUTPUT);
- //   pinMode(soundPin, INPUT);
- //   Serial.begin(9600);
-//  }
-//  void loop(){
-//    int soundState = analogRead(soundPin); // Read sound sensor’s value
- //   Serial.println(soundState);
-  // if the sound sensor’s value is greater than 400, the light will be on.
-  //Otherwise, the light will be turned off
-//    if (soundState > 400) {
-//      digitalWrite(ledPin, HIGH);
-//      delay(100);
- //   }else{
- //     digitalWrite(ledPin, LOW);
- //   }
-//  }
-
-//  #include <Arduino.h>
-//  #include <U8x8lib.h>
- 
-//   U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
- 
-// U8X8_SSD1306_128X64_NONAME_SW_I2C u8x8(/* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);   // OLEDs without Reset of the Display
- 
-//  void setup(void) {
-  //u8x8.setBusClock(100000);  // If you breakout other modules, please enable this line
-//    u8x8.begin();
- //   u8x8.setFlipMode(1);
-//  }
- 
-//  void loop(void) {
-//    u8x8.setFont(u8x8_font_chroma48medium8_r);
- //   u8x8.setCursor(0, 0);
-//    u8x8.print("Hello World!");
-//  }
-
-//Temperature and Humidity Sensor
-//  #include "DHT.h"
-//  #include <Arduino.h>
-//  #include <U8x8lib.h>
- 
-//  #define DHTPIN 3     // what pin we're connected to
-//  #define DHTTYPE DHT11   // DHT 11 
-//  DHT dht(DHTPIN, DHTTYPE);
- 
-//  U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
- 
-//  void setup(void) {
-//    Serial.begin(9600); 
-//   Serial.println("DHTxx test!");
- //   dht.begin();
- //   u8x8.begin();
- //   u8x8.setPowerSave(0);  
-//  u8x8.setFlipMode(1);
-//  }
- 
-//  void loop(void) {
- 
- //   float temp, humi;
- //   temp = dht.readTemperature();
-//    humi = dht.readHumidity();
- 
- //   u8x8.setFont(u8x8_font_chroma48medium8_r);
-//    u8x8.setCursor(0, 33);
- //   u8x8.print("Temp:");
- //   u8x8.print(temp);
- //   u8x8.print("C");
-//    u8x8.setCursor(0,50);
- //   u8x8.print("Humidity:");
-//    u8x8.print(humi);
-//    u8x8.print("%");
-//    u8x8.refreshDisplay();
-//    delay(200);
-//  }
-
-
-//Air pressure detection
-//  #include "Seeed_BMP280.h"
-//  #include <Wire.h>
- 
-//  BMP280 bmp280;
- 
-//  void setup() {
-  //    Serial.begin(9600);
-  //    if (!bmp280.init()) {
-  //        Serial.println("Device not connected or broken!");
- //     }
-//  }
- 
-//  void loop() {
- 
-  //    float pressure;
- 
-    //get and print temperatures
-  //    Serial.print("Temp: ");
-  //    Serial.print(bmp280.getTemperature());
-  //    Serial.println("C"); // The unit for  Celsius because original arduino don't support speical symbols
- 
-    //get and print atmospheric pressure data
-  //    Serial.print("Pressure: ");
-  //    Serial.print(pressure = bmp280.getPressure());
- //     Serial.println("Pa");
- 
-    //get and print altitude data
- //     Serial.print("Altitude: ");
-  //    Serial.print(bmp280.calcAltitude(pressure));
-  //    Serial.println("m");
- 
-  //    Serial.println("\n");//add a line between output of different times.
- 
-  //    delay(1000);
-//  }
-
-//Gravity Acceleration
-//  #include "LIS3DHTR.h"
-//  #ifdef SOFTWAREWIRE
- //     #include <SoftwareWire.h>
- //     SoftwareWire myWire(3, 2);
- //     LIS3DHTR<SoftwareWire> LIS;       //Software I2C
- //     #define WIRE myWire
-//  #else
- //     #include <Wire.h>
- //     LIS3DHTR<TwoWire> LIS;           //Hardware I2C
- //     #define WIRE Wire
-//  #endif
- 
-//  void setup() {
-//      Serial.begin(9600);
- //     while (!Serial) {};
- //     LIS.begin(WIRE, 0x19); //IIC init
- //     delay(100);
- //     LIS.setOutputDataRate(LIS3DHTR_DATARATE_50HZ);
-//  }
-//  void loop() {
-//      if (!LIS) {
-  //        Serial.println("LIS3DHTR didn't connect.");
-   //       while (1);
-  //        return;
-   //   }
-  //    //3 axis
- //     Serial.print("x:"); Serial.print(LIS.getAccelerationX()); Serial.print("  ");
- //     Serial.print("y:"); Serial.print(LIS.getAccelerationY()); Serial.print("  ");
- //     Serial.print("z:"); Serial.println(LIS.getAccelerationZ());
- 
- //     delay(500);
-//  }
-
-//Music Dynamic Rhythm Lamp
-#define NTD0 -1
-#define NTD1 294
-#define NTD2 330
-#define NTD3 350
-#define NTD4 393
-#define NTD5 441
-#define NTD6 495
-#define NTD7 556
- 
-#define NTDL1 147
-#define NTDL2 165
-#define NTDL3 175
-#define NTDL4 196
-#define NTDL5 221
-#define NTDL6 248
-#define NTDL7 278
- 
-#define NTDH1 589
-#define NTDH2 661
-#define NTDH3 700
-#define NTDH4 786
-#define NTDH5 882
-#define NTDH6 990
-#define NTDH7 112
- 
-#define WHOLE 1
-#define HALF 0.5
-#define QUARTER 0.25
-#define EIGHTH 0.25
-#define SIXTEENTH 0.625
- 
-int tune[]=
-{
-NTD3,NTD3,NTD4,NTD5,
-NTD5,NTD4,NTD3,NTD2,
-NTD1,NTD1,NTD2,NTD3,
-NTD3,NTD2,NTD2,
-NTD3,NTD3,NTD4,NTD5,
-NTD5,NTD4,NTD3,NTD2,
-NTD1,NTD1,NTD2,NTD3,
-NTD2,NTD1,NTD1,
-NTD2,NTD2,NTD3,NTD1,
-NTD2,NTD3,NTD4,NTD3,NTD1,
-NTD2,NTD3,NTD4,NTD3,NTD2,
-NTD1,NTD2,NTDL5,NTD0,
-NTD3,NTD3,NTD4,NTD5,
-NTD5,NTD4,NTD3,NTD4,NTD2,
-NTD1,NTD1,NTD2,NTD3,
-NTD2,NTD1,NTD1
-};
- 
-float durt[]=
-{
-1,1,1,1,
-1,1,1,1,
-1,1,1,1,
-1+0.5,0.5,1+1,
-1,1,1,1,
-1,1,1,1,
-1,1,1,1,
-1+0.5,0.5,1+1,
-1,1,1,1,
-1,0.5,0.5,1,1,
-1,0.5,0.5,1,1,
-1,1,1,1,
-1,1,1,1,
-1,1,1,0.5,0.5,
-1,1,1,1,
-1+0.5,0.5,1+1,
-};
- 
-int length;
-int tonepin=5;
-int ledp=4;
- 
-void setup()
-{
-  pinMode(tonepin,OUTPUT);
-  pinMode(ledp,OUTPUT);
-  length=sizeof(tune)/sizeof(tune[0]);
-}
- 
-void loop()
-{
-  for(int x=0;x<length;x++)
-  {
-    tone(tonepin,tune[x]);
-    digitalWrite(ledp, HIGH); 
-    delay(400*durt[x]);
-    digitalWrite(ledp, LOW);
-    delay(100*durt[x]);
-    noTone(tonepin);
- 
+    // Temperature and Humidity Sensor
+      dht.begin();
   }
-  delay(4000);
-}
 
+// START OF THE CODE //
 
-//light Induction Desk Lamp
-//  int soundPin = A2; // Analog sound sensor is to be attached to analog
-//  int lightPin = A6; //Analog light sensor is to be attached to analog
-//  int ledPin = 4; // Digital LED is to be attached to digital
- 
-//  void setup() {
- //   pinMode(ledPin, OUTPUT);
- //   pinMode(lightPin, INPUT);
- //   pinMode(soundPin, INPUT);
-//  }
- 
-//  void loop(){
- //   int soundState = analogRead(soundPin); // Read sound sensor’s value
-//    int lightState = analogRead(lightPin); // Read light sensor’s value
-  // if the sound sensor's value is greater than 500 or the sound sensor's is less than 200, the light will be on.
-  //Otherwise, the light will be turned off
-//  if (soundState > 500 || lightState < 200) {
-//    digitalWrite(ledPin, HIGH);
-//    delay(500); //You can add the "//" to remove the delay
-//  }else{
-//    digitalWrite(ledPin, LOW);
-//  }
-//  }
+  void loop() {
+//    PRINT HELLO WORLD //
+      Serial.println("hello, 3rd Rock from the Sun"); // prints a string to a serial port
+      Serial.println("I am a remote sensor from the planet Beatle Juice"); 
+      
+// GPS goes here when it is identified
+      Serial.print("My location seems to be :");
+      Serial.print("LAT: ");
+      Serial.println("LONG: ");
+      
+//    Blink the sensor LED on for one second and then turn off for one second to indicate it is functional//
+      digitalWrite(ledPin, HIGH);
+      delay(1000);
+      digitalWrite(ledPin, LOW);
+      delay(1000); //delay of 1 second
 
+      Serial.println("My sensors indicate that the:");
+//    Sound Control Light
+      int soundState = analogRead(soundPin); // Read sound sensor’s value
+      Serial.print("Sound Level is: ");
+      Serial.print(soundState);
+      Serial.println(" dB");
+      // if the sound sensor’s value is greater than 400, the light will be on. Otherwise, the light will be turned off
+      if (soundState > 400) {
+          digitalWrite(ledPin, HIGH);
+          }else{
+          digitalWrite(ledPin, LOW);
+       }
+//    Gravity Acceleration
+      if (!LIS) {
+      Serial.println("LIS3DHTR didn't connect.");
+      while (1);
+          return;
+      }
+          //3 axis
+          Serial.print("I am moving in the direction(s) of: ");
+          Serial.print("x:"); Serial.print(LIS.getAccelerationX()); Serial.print(" m"); 
+          Serial.print("  ");
+          Serial.print("y:"); Serial.print(LIS.getAccelerationY()); Serial.print(" m"); 
+          Serial.print("  ");
+          Serial.print("z:"); Serial.print(LIS.getAccelerationZ()); 
+          Serial.println(" m");
+          delay(100);
+          
+    // Air pressure detection
+          float pressure;
+          //get and print temperatures
+          Serial.print("Temperature: ");
+          Serial.print(bmp280.getTemperature());
+          Serial.println(" Celcius"); // The unit for Celsius because original arduino don't support speical symbols
+          //get and print atmospheric pressure data
+          Serial.print("Pressure: ");
+          Serial.print(pressure = bmp280.getPressure());
+          Serial.println(" Pascals");
+          //get and print altitude data
+          Serial.print("Altitude: ");
+          Serial.print(bmp280.calcAltitude(pressure));
+          Serial.println(" meters above sea level");
+          delay(100);
+          
+    // Temperature and Humidity Sensor
+          float temp, humi;
+          //get and print humidity data to Serial
+          temp = dht.readTemperature();
+          humi = dht.readHumidity();
+          Serial.print("Humidity: ");
+          Serial.print(humi);
+          Serial.println(" %");
+          delay(100);
 
+    //add a line between output of different times.
+          Serial.println("\n"); 
+
+} 
+// END OF THE CODE //
